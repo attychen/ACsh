@@ -100,14 +100,9 @@ for index in "${!mirrors[@]}"; do
   docker tag "$loaded_image" "$new_image_name"
 
   # Push the image
-  if push_image "$new_image_name"; then
-    push_status="Push successful"
-  else
-    push_status="Push failed"
-  fi
-
-  # Write to log file, including image package name, pushed image name, and timestamp
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - $selected_file - $new_image_name - $push_status" >> "$log_file"
+  push_image "$new_image_name"
+  push_status=$?
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - $selected_file - $new_image_name - $([ $push_status -eq 0 ] && echo "Push successful" || echo "Push failed")" >> "$log_file"
 done
 
 # Print the list of image push statuses
@@ -116,7 +111,7 @@ echo "==========================================================================
 for index in "${!mirrors[@]}"; do
   selected_file=${mirrors[index]}
   service_name=$(basename "$selected_file" .tar)
-  if grep -q "$selected_file" "$log_file" | grep "Push successful"; then
+  if grep "$selected_file" "$log_file" | grep "Push successful"; then
     echo -e "${YELLOW}[$((index+1)).${service_name}][${BLUE}${new_tag}${NC}]-[${GREEN}Push successful${NC}]"
   else
     echo -e "${YELLOW}[$((index+1)).${service_name}][${BLUE}${new_tag}${NC}]-[${RED}Push failed${NC}]"
